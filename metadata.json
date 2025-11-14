@@ -1,0 +1,11 @@
+{
+  "uuid": "notification-logger-by-blueray453",
+  "name": "notification-logger-by-blueray453",
+  "description": "Log notifications in console.",
+  "version": 1,
+  "shell-version": [
+    "48",
+    "49"
+  ],
+  "url": "https://github.com/blueray453/notification-logger-by-blueray453"
+}
