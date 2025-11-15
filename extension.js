@@ -9,9 +9,6 @@ export default class NotificationThemeExtension extends Extension {
   constructor(metadata) {
     super(metadata);
     this._sourceAddedId = null;
-
-    // Store ALL notification-added IDs per source
-    this._notificationSignalIds = new Map();
   }
 
   enable() {
@@ -47,38 +44,38 @@ export default class NotificationThemeExtension extends Extension {
   }
 
   _on_source_added(tray, source) {
-    const id = source.connect(
-      "notification-added",
-      this._on_notification_added.bind(this)
-    );
 
-    // Save it so we can disconnect later
-    this._notificationSignalIds.set(source, id);
-  }
+    // journal(`tray: ${tray}`);
 
-  _on_notification_added(source, notification) {
-    journal(`notification: ${notification}`);
+    const notificationSignalId = source.connect(
+      "notification-added", (source, notification) => {
+      // journal(`notification: ${notification}`);
 
-    // for (let key in notification) {
-    //   try {
-    //     journal(`${key}: ${notification[key]}`);
-    //   } catch (e) {
+      // for (let key in notification) {
+      //   try {
+      //     journal(`${key}: ${notification[key]}`);
+      //   } catch (e) {
 
-    //   }
-    // }
+      //   }
+      // }
 
-    journal(`title: ${notification.title}`);
-    journal(`body: ${notification.body}`);
+      try {
+        journal(`title: ${notification.title}`);
+        journal(`body: ${notification.body}`);
 
-    const urgencyMap = {
-      0: "low",
-      1: "normal",
-      3: "critical"
-    };
+        const urgencyMap = {
+          0: "low",
+          1: "normal",
+          3: "critical"
+        };
 
-    const urgencyText = urgencyMap[notification._urgency] || "unknown";
+        const urgencyText = urgencyMap[notification._urgency] || "unknown";
 
-    journal(`urgency: ${urgencyText}`);
+        journal(`urgency: ${urgencyText}`);
+      } finally {
+        source.disconnect(notificationSignalId);
+      }
+    });
   }
 
   disable() {
@@ -86,15 +83,5 @@ export default class NotificationThemeExtension extends Extension {
       MessageTray.disconnect(this._sourceAddedId);
       this._sourceAddedId = null;
     }
-    // 2. Disconnect all notification-added signals
-    for (let [source, id] of this._notificationSignalIds) {
-      try {
-        source.disconnect(id);
-      } catch (err) {
-        // ignore if source is gone
-      }
-    }
-
-    this._notificationSignalIds.clear();
   }
 }
