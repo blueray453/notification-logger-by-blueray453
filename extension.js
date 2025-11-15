@@ -28,11 +28,11 @@ export default class NotificationThemeExtension extends Extension {
       }
 
       GLib.log_structured(
-        'fix-css-by-blueray453',
+        'notification-logger-by-blueray453',
         level,
         {
           MESSAGE: `${msg}`,
-          SYSLOG_IDENTIFIER: 'fix-css-by-blueray453',
+          SYSLOG_IDENTIFIER: 'notification-logger-by-blueray453',
           CODE_FILE: GLib.filename_from_uri(import.meta.url)[0]
         }
       );
@@ -40,7 +40,7 @@ export default class NotificationThemeExtension extends Extension {
 
     setLogging(true);
 
-    // journalctl -f -o cat SYSLOG_IDENTIFIER=fix-css-by-blueray453
+    // journalctl -f -o cat SYSLOG_IDENTIFIER=notification-logger-by-blueray453
     journal(`Enabled`);
 
     this._sourceAddedId = MessageTray.connect("source-added", this._on_source_added.bind(this));
@@ -69,6 +69,16 @@ export default class NotificationThemeExtension extends Extension {
 
     journal(`title: ${notification.title}`);
     journal(`body: ${notification.body}`);
+
+    const urgencyMap = {
+      0: "low",
+      1: "normal",
+      3: "critical"
+    };
+
+    const urgencyText = urgencyMap[notification._urgency] || "unknown";
+
+    journal(`urgency: ${urgencyText}`);
   }
 
   disable() {
