@@ -1,9 +1,7 @@
 import GLib from 'gi://GLib';
 import { Extension } from 'resource:///org/gnome/shell/extensions/extension.js';
-import * as Main from 'resource:///org/gnome/shell/ui/main.js';
 import { setLogging, setLogFn, journal } from './utils.js'
-
-const MessageTray = Main.messageTray;
+import * as MessageTray from 'resource:///org/gnome/shell/ui/messageTray.js';
 
 export default class NotificationThemeExtension extends Extension {
   constructor(metadata) {
@@ -40,48 +38,25 @@ export default class NotificationThemeExtension extends Extension {
     // journalctl -f -o cat SYSLOG_IDENTIFIER=notification-logger-by-blueray453
     journal(`Enabled`);
 
-    this._sourceAddedId = MessageTray.connect("source-added", this._on_source_added.bind(this));
-  }
+    this.originalOnRequestBanner = MessageTray.MessageTray.prototype._onNotificationRequestBanner;
 
-  _on_source_added(tray, source) {
+    MessageTray.MessageTray.prototype._onNotificationRequestBanner = function (_source, notification) {      // Log details
+      journal(`title: ${notification.title}`);
+      journal(`body: ${notification.body}`);
 
-    // journal(`tray: ${tray}`);
+      const urgencyMap = {
+        0: "low",
+        1: "normal",
+        2: "normal",
+        3: "critical"
+      };
 
-    const notificationSignalId = source.connect(
-      "notification-added", (source, notification) => {
-      // journal(`notification: ${notification}`);
-
-      // for (let key in notification) {
-      //   try {
-      //     journal(`${key}: ${notification[key]}`);
-      //   } catch (e) {
-
-      //   }
-      // }
-
-      try {
-        journal(`title: ${notification.title}`);
-        journal(`body: ${notification.body}`);
-
-        const urgencyMap = {
-          0: "low",
-          1: "normal",
-          3: "critical"
-        };
-
-        const urgencyText = urgencyMap[notification._urgency] || "unknown";
-
-        journal(`urgency: ${urgencyText}`);
-      } finally {
-        source.disconnect(notificationSignalId);
-      }
-    });
+      const urgencyText = urgencyMap[notification._urgency] || "unknown";
+      journal(`urgency: ${urgencyText}`);
+    };
   }
 
   disable() {
-    if (this._sourceAddedId) {
-      MessageTray.disconnect(this._sourceAddedId);
-      this._sourceAddedId = null;
-    }
+    MessageTray.MessageTray.prototype._onNotificationRequestBanner = this.originalOnRequestBanner;
   }
 }
