@@ -5,6 +5,8 @@ import * as MessageTray from 'resource:///org/gnome/shell/ui/messageTray.js';
 
 const originalAddNotification = MessageTray.Source.prototype.addNotification;
 
+const originalOnRequestBanner = MessageTray.MessageTray.prototype._onNotificationRequestBanner;
+
 export default class NotificationThemeExtension extends Extension {
   constructor(metadata) {
     super(metadata);
@@ -58,10 +60,16 @@ export default class NotificationThemeExtension extends Extension {
 
       // Call the original addNotification
       return originalAddNotification.call(this, notification);
-    };
+    }
+
+    MessageTray.MessageTray.prototype._onNotificationRequestBanner = function (_source, notification) {      // Log details
+      return;
+    }
   }
 
   disable() {
     MessageTray.Source.prototype.addNotification = originalAddNotification;
+
+    MessageTray.MessageTray.prototype._onNotificationRequestBanner = originalOnRequestBanner;
   }
 }
