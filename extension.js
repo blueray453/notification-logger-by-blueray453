@@ -3,6 +3,8 @@ import { Extension } from 'resource:///org/gnome/shell/extensions/extension.js';
 import { setLogging, setLogFn, journal } from './utils.js'
 import * as MessageTray from 'resource:///org/gnome/shell/ui/messageTray.js';
 
+const originalAddNotification = MessageTray.Source.prototype.addNotification;
+
 export default class NotificationThemeExtension extends Extension {
   constructor(metadata) {
     super(metadata);
@@ -38,9 +40,9 @@ export default class NotificationThemeExtension extends Extension {
     // journalctl -f -o cat SYSLOG_IDENTIFIER=notification-logger-by-blueray453
     journal(`Enabled`);
 
-    this.originalOnRequestBanner = MessageTray.MessageTray.prototype._onNotificationRequestBanner;
+    // journal(`originalAddNotification ${this.originalAddNotification}`);
 
-    MessageTray.MessageTray.prototype._onNotificationRequestBanner = function (_source, notification) {      // Log details
+    MessageTray.Source.prototype.addNotification = function (notification) {      // Log details
       journal(`title: ${notification.title}`);
       journal(`body: ${notification.body}`);
 
@@ -53,10 +55,13 @@ export default class NotificationThemeExtension extends Extension {
 
       const urgencyText = urgencyMap[notification._urgency] || "unknown";
       journal(`urgency: ${urgencyText}`);
+
+      // Call the original addNotification
+      return originalAddNotification.call(this, notification);
     };
   }
 
   disable() {
-    MessageTray.MessageTray.prototype._onNotificationRequestBanner = this.originalOnRequestBanner;
+    MessageTray.Source.prototype.addNotification = originalAddNotification;
   }
 }
