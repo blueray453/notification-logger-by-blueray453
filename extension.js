@@ -8,11 +8,6 @@ const originalAddNotification = MessageTray.Source.prototype.addNotification;
 const originalOnRequestBanner = MessageTray.MessageTray.prototype._onNotificationRequestBanner;
 
 export default class NotificationThemeExtension extends Extension {
-  constructor(metadata) {
-    super(metadata);
-    this._sourceAddedId = null;
-  }
-
   enable() {
     // Main.notify('My Extension', 'This is a notification from my GNOME extension!');
     // global.notify_error("msg", "details");
