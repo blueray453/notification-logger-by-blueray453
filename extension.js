@@ -1,11 +1,10 @@
 import GLib from 'gi://GLib';
 import { Extension } from 'resource:///org/gnome/shell/extensions/extension.js';
-import { setLogging, setLogFn, journal } from './utils.js'
 import * as MessageTray from 'resource:///org/gnome/shell/ui/messageTray.js';
+import { setLogging, setLogFn, journal } from './utils.js'
 
-const originalAddNotification = MessageTray.Source.prototype.addNotification;
-
-const originalOnRequestBanner = MessageTray.MessageTray.prototype._onNotificationRequestBanner;
+const _originalAddNotification = MessageTray.Source.prototype.addNotification;
+const _originalOnRequestBanner = MessageTray.MessageTray.prototype._onNotificationRequestBanner;
 
 export default class NotificationThemeExtension extends Extension {
   enable() {
@@ -36,35 +35,42 @@ export default class NotificationThemeExtension extends Extension {
 
     // journalctl -f -o cat SYSLOG_IDENTIFIER=notification-logger-by-blueray453
     journal(`Enabled`);
-
     // journal(`originalAddNotification ${this.originalAddNotification}`);
-
-    MessageTray.Source.prototype.addNotification = function (notification) {      // Log details
-      journal(`title: ${notification.title}`);
-      journal(`body: ${notification.body}`);
-
-      const urgencyMap = {
-        0: "low",
-        1: "normal",
-        2: "high",
-        3: "critical"
-      };
-
-      const urgencyText = urgencyMap[notification._urgency] || "unknown";
-      journal(`urgency: ${urgencyText}`);
-
-      // Call the original addNotification
-      return originalAddNotification.call(this, notification);
-    }
-
-    MessageTray.MessageTray.prototype._onNotificationRequestBanner = function (_source, notification) {      // Log details
-      return;
-    }
+    this._patchNotificationAddNotification();
+    this._patchNotificationRequestBanner();
   }
 
-  disable() {
-    MessageTray.Source.prototype.addNotification = originalAddNotification;
+  _patchNotificationAddNotification() {
+      MessageTray.Source.prototype.addNotification = function (notification) {
+        // Log details
+        journal(`title: ${notification.title}`);
+        journal(`body: ${notification.body}`);
 
-    MessageTray.MessageTray.prototype._onNotificationRequestBanner = originalOnRequestBanner;
+        const urgencyMap = {
+          0: "low",
+          1: "normal",
+          2: "high",
+          3: "critical"
+        };
+
+        const urgencyText = urgencyMap[notification._urgency] || "unknown";
+        journal(`urgency: ${urgencyText}`);
+
+        // Call the original addNotification
+        return _originalAddNotification.call(this, notification);
+      };
+    }
+
+    _patchNotificationRequestBanner() {
+      MessageTray.MessageTray.prototype._onNotificationRequestBanner = function (_source, notification) {
+        // Log details
+        return;
+      };
+    }
+
+  disable() {
+    MessageTray.Source.prototype.addNotification = _originalAddNotification;
+
+    MessageTray.MessageTray.prototype._onNotificationRequestBanner = _originalOnRequestBanner;
   }
 }
