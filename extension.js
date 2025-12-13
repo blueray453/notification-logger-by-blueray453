@@ -62,7 +62,7 @@ export default class NotificationThemeExtension extends Extension {
     }
 
     _patchNotificationRequestBanner() {
-      MessageTray.MessageTray.prototype._onNotificationRequestBanner = function (_source, notification) {
+      MessageTray.MessageTray.prototype._onNotificationRequestBanner = function () {
         // Log details
         return;
       };
